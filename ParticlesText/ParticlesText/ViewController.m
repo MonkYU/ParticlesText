@@ -30,7 +30,7 @@
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     self.particlesMTKView = [[ParticlesMTKView alloc] initWithBuilder:^(ParticlesBuilder *builder) {
-        builder.frame = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), 300);
+        builder.frame = CGRectMake(0, 160, CGRectGetWidth(self.view.bounds), 300);
         builder.text = @"天青色等烟雨 而我在等你";
         builder.font = [UIFont systemFontOfSize:60];
         builder.density = 10;
@@ -38,7 +38,7 @@
         builder.dispersionY = 2;
         builder.duration = 2.0;
         builder.hexColor = @"#1de0f9";
-        builder.particleFinishType = ParticleFinishTypeDiffuse;
+        builder.particleFinishType = ParticleFinishTypeShake;
     }];
     [self.particlesMTKView prepareAnimating];
     [self.view addSubview:self.particlesMTKView];
