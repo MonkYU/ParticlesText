@@ -30,3 +30,11 @@
 - ParticlesText is a view that generates particle aggregation and diffusion animation based on specified text.
 - Based on Metal
 - Support particle density, X-axis, Y-axis diffusion degree, animation duration, particle color, etc.
+
+## 效果图
+
+![结束时静止](https://github.com/MonkYU/ParticlesText/blob/master/Resources/static.gif)
+
+![结束时晃动](https://github.com/MonkYU/ParticlesText/blob/master/Resources/shake.gif)
+
+![结束时扩散消失](https://github.com/MonkYU/ParticlesText/blob/master/Resources/diffusion.gif)
