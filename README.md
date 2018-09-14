@@ -33,8 +33,11 @@
 
 ## 效果图
 
+### 结束时静止
 ![结束时静止](https://github.com/MonkYU/ParticlesText/blob/master/Resources/static.gif)
 
+### 结束时晃动
 ![结束时晃动](https://github.com/MonkYU/ParticlesText/blob/master/Resources/shake.gif)
 
+### 结束时扩散消失
 ![结束时扩散消失](https://github.com/MonkYU/ParticlesText/blob/master/Resources/diffusion.gif)
