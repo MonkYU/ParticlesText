@@ -38,10 +38,10 @@
         builder.dispersionY = 2;
         builder.duration = 2.0;
         builder.hexColor = @"#1de0f9";
-        builder.particleFinishType = ParticleFinishTypeShake;
+        builder.particleFinishType = ParticleFinishTypeDiffuse;
     }];
-    [self.particlesMTKView prepareAnimating];
     [self.view addSubview:self.particlesMTKView];
+    [self.particlesMTKView prepareAnimating];
     [self.particlesMTKView startAnimating];
 }
 
