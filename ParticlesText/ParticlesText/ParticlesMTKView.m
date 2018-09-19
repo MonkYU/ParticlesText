@@ -7,7 +7,6 @@
 //
 
 #import "ParticlesMTKView.h"
-#import "NSString+Path.h"
 
 struct Vector4 {
     float32_t x;
@@ -26,6 +25,11 @@ struct ParticleColor {
     float32_t b;
     float32_t a;
 };
+
+#define Mask8(x) ( (x) & 0xFF )
+#define R(x) ( Mask8(x) )
+#define G(x) ( Mask8(x >> 8 ) )
+#define B(x) ( Mask8(x >> 16) )
 
 @interface ParticlesMTKView ()
 @property (nonatomic, assign) NSInteger particlesCount;
@@ -157,15 +161,49 @@ struct ParticleColor {
     if (self.window) {
         scale = self.window.screen.scale;
     }
-    NSInteger width = self.drawableSize.width;
-    NSInteger height = self.drawableSize.height;
-    
+
     CGSize blankSize = CGSizeMake(self.bounds.size.width * scale, self.bounds.size.height * scale);
     self.region = MTLRegionMake2D(0, 0, blankSize.width, blankSize.height);
     self.blankData = calloc(1, blankSize.width * blankSize.height * 4);
     self.bytesPerRow = 4 * blankSize.width;
+
+    NSUInteger labelWidth = 0;
+    NSUInteger labelHeight = 0;
+    CGRect rect = [self.text boundingRectWithSize:CGSizeMake(CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds)) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading attributes:@{NSFontAttributeName: self.font, NSForegroundColorAttributeName: [UIColor blackColor]} context:nil];
+    labelWidth = ceilf(CGRectGetWidth(rect));
+    if (labelWidth % 4 != 0) {
+        NSInteger mod = labelWidth / 4;
+        labelWidth = (mod + 1) * 4;
+    }
+    labelHeight = CGRectGetHeight(self.bounds);
+    UILabel *placeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, labelWidth, labelHeight)];
+    placeLabel.numberOfLines = 0;
+    placeLabel.backgroundColor = [UIColor whiteColor];
+    placeLabel.text = self.text;
+    placeLabel.font = self.font;
+    placeLabel.textColor = [UIColor blackColor];
+    if (self.adjustsFontSizeToFitWidth) {
+        placeLabel.adjustsFontSizeToFitWidth = YES;
+    }
+    UIImage *image = [self imageFromView:placeLabel];
+    NSUInteger imageWidth = CGImageGetWidth(image.CGImage);
+    NSUInteger imageHeight = CGImageGetHeight(image.CGImage);
+    uint32_t *pixelData = [self pixelDataFromImage:image];
+    NSMutableArray *points = [NSMutableArray arrayWithCapacity:1];
+    for (NSInteger i = 0; i < imageHeight; i++) {
+        for (NSInteger j = 0; j < imageWidth; j++) {
+            uint32_t color = *pixelData;
+            CGFloat r = R(color) / 255.0f;
+            CGFloat g = G(color) / 255.0f;
+            CGFloat b = B(color) / 255.0f;
+            if (r == 0.0 && g == 0.0 && b == 0.0) {
+                [points addObject:[NSValue valueWithCGPoint:CGPointMake(j + self.frame.origin.x, i)]];
+            }
+            pixelData++;
+        }
+    }
+    self.textPoints = [points copy];
     
-    self.textPoints = [self.text pointsFromFont:[UIFont systemFontOfSize:self.font.pointSize * (self.window != nil ? self.window.screen.scale : [UIScreen mainScreen].scale)] width:width height:height shouldRatio:NO];
     if (self.density < 1 || self.density > 10) {
         [NSException raise:@"Invalid density value" format:@"Particle density must between 1 and 10"];
     }
@@ -281,7 +319,7 @@ struct ParticleColor {
 
 - (void)startAnimating {
     self.shouldStart = YES;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.duration * 1.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.duration * 1. * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         self.isFinishHomingAnimation = 1;
         self.finishHomingStateBuffer = [self.device newBufferWithBytes:&self->_isFinishHomingAnimation length:sizeof(int) options:MTLResourceCPUCacheModeWriteCombined];
         [[NSNotificationCenter defaultCenter] postNotificationName:ParticlesHomingAnimationFinishedNotification object:nil];
@@ -333,5 +371,19 @@ struct ParticleColor {
     return (drand48() - 0.5) * [UIScreen mainScreen].bounds.size.height * self.dispersionY;
 }
 
+- (UIImage *)imageFromView:(UIView *)view {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, YES, [UIScreen mainScreen].scale);
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    [view.layer renderInContext:ctx];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
+- (uint32_t *)pixelDataFromImage:(UIImage *)image {
+    NSData *pixelData = CFBridgingRelease(CGDataProviderCopyData(CGImageGetDataProvider(image.CGImage)));
+    uint32_t *bytes = (uint32_t *)pixelData.bytes;
+    return bytes;
+}
 
 @end

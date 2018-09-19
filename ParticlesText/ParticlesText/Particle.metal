@@ -52,15 +52,14 @@ kernel void particleRendererShader(texture2d<float, access::write> outTexture [[
         }
         distance_between_origin_dislocation_particles = abs(distance(dislocationParticlePosition, originParticlesPosition)) / duration / 60;
         if (inFinishHoming == 1) {
-            if (finishType == 0) {
-                destinationX = inParticle.x;
-                destinationY = inParticle.y;
-            }
             if (finishType == 1) {
                 float fid = float(id);
                 // do some shake effect
                 destinationX = originParticle.x + randomDisplacement * sin(fid) * 3 * randomDisplacement;
                 destinationY = originParticle.y + randomDisplacement * cos(fid) * 3 * randomDisplacement;
+            }else if (finishType == 0) {
+                destinationX = inParticle.x;
+                destinationY = inParticle.y;
             }
         }else {
             if (inParticle.x == originParticle.x) { // slope is near to +inf or -inf
@@ -98,7 +97,7 @@ kernel void particleRendererShader(texture2d<float, access::write> outTexture [[
             }
         }
     }else { // diffuse effect
-        if (inFinishHoming == 0) { // back to origin location animation is not finish
+        if (inFinishHoming == 0 or startDiffuseFlag == 0) { // back to origin location animation is not finish
             if (particlePositionA.x > 0 && particlePositionA.y > 0 && particlePositionA.x < imageWidth && particlePositionA.y < imageHeight) {
                 outTexture.write(outColor, particlePositionA);
             }

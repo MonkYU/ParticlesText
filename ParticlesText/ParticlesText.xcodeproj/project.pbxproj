@@ -15,7 +15,6 @@
 		1EB0673B214BDBA600F0BF1E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB0673A214BDBA600F0BF1E /* main.m */; };
 		1EB06748214BDCC100F0BF1E /* ParticlesBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06743214BDCC000F0BF1E /* ParticlesBuilder.m */; };
 		1EB06749214BDCC100F0BF1E /* ParticlesMTKView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06744214BDCC000F0BF1E /* ParticlesMTKView.m */; };
-		1EB0674A214BDCC100F0BF1E /* NSString+Path.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06745214BDCC000F0BF1E /* NSString+Path.m */; };
 		1EB0674B214BDCC100F0BF1E /* Particle.metal in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06746214BDCC100F0BF1E /* Particle.metal */; };
 /* End PBXBuildFile section */
 
@@ -30,11 +29,9 @@
 		1EB06737214BDBA600F0BF1E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1EB06739214BDBA600F0BF1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1EB0673A214BDBA600F0BF1E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		1EB06741214BDCC000F0BF1E /* NSString+Path.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Path.h"; sourceTree = "<group>"; };
 		1EB06742214BDCC000F0BF1E /* ParticlesBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticlesBuilder.h; sourceTree = "<group>"; };
 		1EB06743214BDCC000F0BF1E /* ParticlesBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ParticlesBuilder.m; sourceTree = "<group>"; };
 		1EB06744214BDCC000F0BF1E /* ParticlesMTKView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ParticlesMTKView.m; sourceTree = "<group>"; };
-		1EB06745214BDCC000F0BF1E /* NSString+Path.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Path.m"; sourceTree = "<group>"; };
 		1EB06746214BDCC100F0BF1E /* Particle.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Particle.metal; sourceTree = "<group>"; };
 		1EB06747214BDCC100F0BF1E /* ParticlesMTKView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticlesMTKView.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -69,8 +66,6 @@
 		1EB0672A214BDBA500F0BF1E /* ParticlesText */ = {
 			isa = PBXGroup;
 			children = (
-				1EB06741214BDCC000F0BF1E /* NSString+Path.h */,
-				1EB06745214BDCC000F0BF1E /* NSString+Path.m */,
 				1EB06746214BDCC100F0BF1E /* Particle.metal */,
 				1EB06742214BDCC000F0BF1E /* ParticlesBuilder.h */,
 				1EB06743214BDCC000F0BF1E /* ParticlesBuilder.m */,
@@ -164,7 +159,6 @@
 				1EB0672D214BDBA500F0BF1E /* AppDelegate.m in Sources */,
 				1EB06748214BDCC100F0BF1E /* ParticlesBuilder.m in Sources */,
 				1EB0674B214BDCC100F0BF1E /* Particle.metal in Sources */,
-				1EB0674A214BDCC100F0BF1E /* NSString+Path.m in Sources */,
 				1EB06749214BDCC100F0BF1E /* ParticlesMTKView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

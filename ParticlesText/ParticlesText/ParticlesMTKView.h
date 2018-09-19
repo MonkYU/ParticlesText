@@ -20,6 +20,7 @@ static NSString *const ParticlesDiffuseAnimationFinishedNotification = @"Particl
 @property (nonatomic, assign) CGFloat dispersionY; // 分散度 0 - 不分散 1 - 最大分散
 @property (nonatomic, assign) float32_t duration;  // 粒子效果持续时间
 @property (nonatomic, copy) NSString *hexColor; // 粒子颜色
+@property (nonatomic, assign) BOOL adjustsFontSizeToFitWidth; // 是否调整字体大小，来适配mtkview的frame，否则以宽度为限制，计算全铺开的高度
 @property (nonatomic, assign) ParticleFinishType particleFinishType; // 粒子完成归位动画后的事件类型
 - (instancetype)initWithBuilder:(void(^)(ParticlesBuilder *builder))handler;
 - (void)prepareAnimating;

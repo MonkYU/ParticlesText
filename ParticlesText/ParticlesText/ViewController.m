@@ -7,7 +7,6 @@
 //
 
 #import "ViewController.h"
-#import "NSString+Path.h"
 #import "ParticlesMTKView.h"
 
 @interface ViewController ()
@@ -30,15 +29,16 @@
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     self.particlesMTKView = [[ParticlesMTKView alloc] initWithBuilder:^(ParticlesBuilder *builder) {
-        builder.frame = CGRectMake(0, 160, CGRectGetWidth(self.view.bounds), 300);
-        builder.text = @"天青色等烟雨 而我在等你";
+        builder.frame = CGRectMake(50, 160, CGRectGetWidth(self.view.bounds) - 100, 100);
+        builder.text = @"天青色等烟雨 ";
         builder.font = [UIFont systemFontOfSize:60];
         builder.density = 10;
         builder.dispersionX = 2;
         builder.dispersionY = 2;
         builder.duration = 2.0;
         builder.hexColor = @"#1de0f9";
-        builder.particleFinishType = ParticleFinishTypeDiffuse;
+        builder.adjustsFontSizeToFitWidth = YES;
+        builder.particleFinishType = ParticleFinishTypeStatic;
     }];
     [self.view addSubview:self.particlesMTKView];
     [self.particlesMTKView prepareAnimating];

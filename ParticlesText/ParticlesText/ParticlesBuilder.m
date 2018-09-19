@@ -21,6 +21,7 @@
     particlesMTKView.duration = self.duration;
     particlesMTKView.hexColor = self.hexColor;
     particlesMTKView.particleFinishType = self.particleFinishType;
+    particlesMTKView.adjustsFontSizeToFitWidth = self.adjustsFontSizeToFitWidth;
     return particlesMTKView;
 }
 
