@@ -38,7 +38,7 @@
         builder.duration = 2.0;
         builder.hexColor = @"#1de0f9";
         builder.adjustsFontSizeToFitWidth = YES;
-        builder.particleFinishType = ParticleFinishTypeStatic;
+        builder.particleFinishType = ParticleFinishTypeShake;
     }];
     [self.view addSubview:self.particlesMTKView];
     [self.particlesMTKView prepareAnimating];
