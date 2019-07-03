@@ -6,6 +6,8 @@
 //  Copyright © 2018 Rose LZY. All rights reserved.
 //
 
+@import AVFoundation;
+@import AssetsLibrary;
 #import "ParticlesMTKView.h"
 
 struct Vector4 {
@@ -75,6 +77,13 @@ struct ParticleColor {
 @property (nonatomic, strong) NSTimer *timer;
 @property (nonatomic, assign) float randomDisplacement;
 @property (nonatomic, strong) id<MTLBuffer> randomDisplacementBuffer;
+
+@property (nonatomic, strong) UIImageView *testView;
+@property (nonatomic, assign) NSInteger renderCount;
+@property (nonatomic, strong) AVAssetWriter *videoWriter;
+@property (nonatomic, strong) AVAssetWriterInput *writerInput;
+@property (nonatomic, strong) AVAssetWriterInputPixelBufferAdaptor *adaptor;
+@property (nonatomic, copy) NSString *myPathDocs;
 @end
 
 @implementation ParticlesMTKView
@@ -89,6 +98,8 @@ struct ParticleColor {
     self = [super initWithFrame:frame];
     if (self) {
         self.concurrentQueue = dispatch_queue_create("concurrent.particles.com", DISPATCH_QUEUE_CONCURRENT);
+        self.testView = [[UIImageView alloc] initWithImage:nil];
+        self.renderCount = 0;
     }
     return self;
 }
@@ -112,6 +123,12 @@ struct ParticleColor {
     [self initParticlesPoints];
     [self initComputePipelineState];
     [self updatePointsPosition];
+    [self addSubview:self.testView];
+    self.testView.frame = CGRectMake(0, 300, 100, 100);
+    self.testView.backgroundColor = [UIColor clearColor];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    self.myPathDocs =  [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"NES-%d.mov",arc4random() % 1000]];
 }
 
 - (void)initDevice {
@@ -288,7 +305,7 @@ struct ParticleColor {
 
 - (void)update {
     @autoreleasepool {
-        id<CAMetalDrawable> nextDrawable = [((CAMetalLayer *)self.layer) nextDrawable];
+        id<CAMetalDrawable> nextDrawable = self.currentDrawable;
         id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
         id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
         [computeEncoder setComputePipelineState:self.computePipelineState];
@@ -310,7 +327,13 @@ struct ParticleColor {
         [computeEncoder setTexture:nextDrawable.texture atIndex:0];
         [computeEncoder dispatchThreadgroups:self.threadGroupsPerGrid threadsPerThreadgroup:self.threadsPerThreadGroup];
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
+            id<MTLTexture> texture = nextDrawable.texture;
+            CIImage *ciimage = [CIImage imageWithMTLTexture:texture options:nil];
+            UIImage *image = [UIImage imageWithCIImage:ciimage];
+            [self writeToFile:texture];
+            self.renderCount += 1;
         }];
+        
         [computeEncoder endEncoding];
         [commandBuffer presentDrawable:nextDrawable];
         [commandBuffer commit];
@@ -384,6 +407,59 @@ struct ParticleColor {
     NSData *pixelData = CFBridgingRelease(CGDataProviderCopyData(CGImageGetDataProvider(image.CGImage)));
     uint32_t *bytes = (uint32_t *)pixelData.bytes;
     return bytes;
+}
+
+- (void)writeToFile:(id<MTLTexture>)texture {
+    if (self.renderCount == 1) {
+        NSError *error;
+        self.videoWriter = [[AVAssetWriter alloc] initWithURL: [NSURL fileURLWithPath:self.myPathDocs] fileType:AVFileTypeQuickTimeMovie error:&error];
+        if(error) {
+            NSLog(@"error creating AssetWriter: %@",[error description]);
+        }
+        NSDictionary *videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+                                       AVVideoCodecTypeH264, AVVideoCodecKey,
+                                       [NSNumber numberWithInteger:[texture width]], AVVideoWidthKey,
+                                       [NSNumber numberWithInteger:[texture height]], AVVideoHeightKey,
+                                       nil];
+        AVAssetWriterInput* writerInput = [AVAssetWriterInput
+                                           assetWriterInputWithMediaType:AVMediaTypeVideo
+                                           outputSettings:videoSettings];
+        NSMutableDictionary *attributes = [[NSMutableDictionary alloc] init];
+        [attributes setObject:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+        [attributes setObject:[NSNumber numberWithInteger:[texture width]] forKey:(NSString*)kCVPixelBufferWidthKey];
+        [attributes setObject:[NSNumber numberWithInteger:[texture height]] forKey:(NSString*)kCVPixelBufferHeightKey];
+        self.adaptor = [AVAssetWriterInputPixelBufferAdaptor assetWriterInputPixelBufferAdaptorWithAssetWriterInput:writerInput sourcePixelBufferAttributes:attributes];
+        [self.videoWriter addInput:writerInput];
+        self.writerInput.expectsMediaDataInRealTime = YES;
+        BOOL start = [self.videoWriter startWriting];
+        [self.videoWriter startSessionAtSourceTime:kCMTimeZero];
+    }
+    
+}
+
+- (void)finishWriting {
+    [self.writerInput markAsFinished];
+    [self.videoWriter finishWritingWithCompletionHandler:^{
+        
+    }];
+    
+    CVPixelBufferPoolRelease(self.adaptor.pixelBufferPool);
+    
+    NSURL *outputURL = [NSURL URLWithString:self.myPathDocs];
+    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+    if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) {
+        [library writeVideoAtPathToSavedPhotosAlbum:outputURL completionBlock:^(NSURL *assetURL, NSError *error){
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (error) {
+                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Video Saving Failed" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                    [alert show];
+                } else {
+                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Video Saved" message:@"Saved To Photo Album" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                    [alert show];
+                }
+            });
+        }];
+    }
 }
 
 @end
