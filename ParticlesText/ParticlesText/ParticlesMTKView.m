@@ -84,6 +84,7 @@ struct ParticleColor {
 @property (nonatomic, strong) AVAssetWriterInput *writerInput;
 @property (nonatomic, strong) AVAssetWriterInputPixelBufferAdaptor *adaptor;
 @property (nonatomic, copy) NSString *myPathDocs;
+@property (nonatomic, assign) int fps;
 @end
 
 @implementation ParticlesMTKView
@@ -115,6 +116,7 @@ struct ParticleColor {
 }
 
 - (void)initComponents {
+    self.fps = 30;
     [self initDevice];
     [self initExtraProperty];
     [self initParticlesColor];
@@ -304,6 +306,10 @@ struct ParticleColor {
 }
 
 - (void)update {
+    if (self.renderCount == 200) {
+        NSLog(@"开始写入");
+        [self finishWriting];
+    }
     @autoreleasepool {
         id<CAMetalDrawable> nextDrawable = self.currentDrawable;
         id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
@@ -328,9 +334,9 @@ struct ParticleColor {
         [computeEncoder dispatchThreadgroups:self.threadGroupsPerGrid threadsPerThreadgroup:self.threadsPerThreadGroup];
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull commandBuffer) {
             id<MTLTexture> texture = nextDrawable.texture;
-            CIImage *ciimage = [CIImage imageWithMTLTexture:texture options:nil];
-            UIImage *image = [UIImage imageWithCIImage:ciimage];
-            [self writeToFile:texture];
+            if (self.renderCount < 200) {
+                [self writeToFile:texture];
+            }
             self.renderCount += 1;
         }];
         
@@ -410,7 +416,13 @@ struct ParticleColor {
 }
 
 - (void)writeToFile:(id<MTLTexture>)texture {
-    if (self.renderCount == 1) {
+    CIImage *ciimage = [CIImage imageWithMTLTexture:texture options:nil];
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CGImageRef ref = [context createCGImage:ciimage fromRect:ciimage.extent];
+    UIImage *image = [UIImage imageWithCGImage:ref];
+    CVPixelBufferRef pixelBuffer = [self pixelBufferFromCGImage:image.CGImage];
+    CGImageRelease(ref);
+    if (self.renderCount == 0) {
         NSError *error;
         self.videoWriter = [[AVAssetWriter alloc] initWithURL: [NSURL fileURLWithPath:self.myPathDocs] fileType:AVFileTypeQuickTimeMovie error:&error];
         if(error) {
@@ -421,9 +433,7 @@ struct ParticleColor {
                                        [NSNumber numberWithInteger:[texture width]], AVVideoWidthKey,
                                        [NSNumber numberWithInteger:[texture height]], AVVideoHeightKey,
                                        nil];
-        AVAssetWriterInput* writerInput = [AVAssetWriterInput
-                                           assetWriterInputWithMediaType:AVMediaTypeVideo
-                                           outputSettings:videoSettings];
+        AVAssetWriterInput* writerInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:videoSettings];
         NSMutableDictionary *attributes = [[NSMutableDictionary alloc] init];
         [attributes setObject:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
         [attributes setObject:[NSNumber numberWithInteger:[texture width]] forKey:(NSString*)kCVPixelBufferWidthKey];
@@ -432,34 +442,90 @@ struct ParticleColor {
         [self.videoWriter addInput:writerInput];
         self.writerInput.expectsMediaDataInRealTime = YES;
         BOOL start = [self.videoWriter startWriting];
+        if (start) {
+            NSLog(@"start success");
+        }
         [self.videoWriter startSessionAtSourceTime:kCMTimeZero];
     }
-    
+    if (self.adaptor.assetWriterInput.readyForMoreMediaData) {
+        CMTime frameTime = CMTimeMake(1, self.fps);
+        CMTime lastTime=CMTimeMake(self.renderCount, self.fps);
+        CMTime presentTime=CMTimeAdd(lastTime, frameTime);
+        BOOL ret = [self.adaptor appendPixelBuffer:pixelBuffer withPresentationTime:presentTime];
+        if (ret) {
+            NSLog(@"appendPixel success renderCount %ld",self.renderCount);
+            CVPixelBufferRelease(pixelBuffer);
+        }
+    }
 }
 
 - (void)finishWriting {
     [self.writerInput markAsFinished];
     [self.videoWriter finishWritingWithCompletionHandler:^{
+        NSLog(@"finish Writing");
+        CVPixelBufferPoolRelease(self.adaptor.pixelBufferPool);
         
+        NSURL *outputURL = [NSURL URLWithString:self.myPathDocs];
+        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+        if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) {
+            [library writeVideoAtPathToSavedPhotosAlbum:outputURL completionBlock:^(NSURL *assetURL, NSError *error){
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (error) {
+                        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Video Saving Failed" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                        [alert show];
+                    } else {
+                        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Video Saved" message:@"Saved To Photo Album" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                        [alert show];
+                    }
+                });
+            }];
+        }
     }];
+}
+
+- (CVPixelBufferRef)pixelBufferFromCGImage:(CGImageRef)image {
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
+                             [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
+                             [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
+                             nil];
+    CVPixelBufferRef pxbuffer = NULL;
     
-    CVPixelBufferPoolRelease(self.adaptor.pixelBufferPool);
+    CVPixelBufferCreate(kCFAllocatorDefault, CGImageGetWidth(image),
+                        CGImageGetHeight(image), kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef) options,
+                        &pxbuffer);
     
-    NSURL *outputURL = [NSURL URLWithString:self.myPathDocs];
-    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-    if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) {
-        [library writeVideoAtPathToSavedPhotosAlbum:outputURL completionBlock:^(NSURL *assetURL, NSError *error){
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (error) {
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Video Saving Failed" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
-                    [alert show];
-                } else {
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Video Saved" message:@"Saved To Photo Album" delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-                    [alert show];
-                }
-            });
-        }];
-    }
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(pxdata, CGImageGetWidth(image),
+                                                 CGImageGetHeight(image), 8, 4*CGImageGetWidth(image), rgbColorSpace,
+                                                 (CGBitmapInfo)kCGImageAlphaNoneSkipFirst);
+    
+    CGContextConcatCTM(context, CGAffineTransformMakeRotation(0));
+    
+    CGAffineTransform flipVertical = CGAffineTransformMake(
+                                                           1, 0, 0, -1, 0, CGImageGetHeight(image)
+                                                           );
+    CGContextConcatCTM(context, flipVertical);
+    
+    
+    
+    CGAffineTransform flipHorizontal = CGAffineTransformMake(
+                                                             -1.0, 0.0, 0.0, 1.0, CGImageGetWidth(image), 0.0
+                                                             );
+    
+    CGContextConcatCTM(context, flipHorizontal);
+    
+    
+    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
+                                           CGImageGetHeight(image)), image);
+    CGColorSpaceRelease(rgbColorSpace);
+    CGContextRelease(context);
+    
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+    
+    return pxbuffer;
 }
 
 @end
