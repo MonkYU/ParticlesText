@@ -16,6 +16,7 @@
 		1EB06748214BDCC100F0BF1E /* ParticlesBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06743214BDCC000F0BF1E /* ParticlesBuilder.m */; };
 		1EB06749214BDCC100F0BF1E /* ParticlesMTKView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06744214BDCC000F0BF1E /* ParticlesMTKView.m */; };
 		1EB0674B214BDCC100F0BF1E /* Particle.metal in Sources */ = {isa = PBXBuildFile; fileRef = 1EB06746214BDCC100F0BF1E /* Particle.metal */; };
+		9F3F509C231CC5ED00DC0B5F /* problem.zip in Resources */ = {isa = PBXBuildFile; fileRef = 9F3F509B231CC5ED00DC0B5F /* problem.zip */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		1EB06744214BDCC000F0BF1E /* ParticlesMTKView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ParticlesMTKView.m; sourceTree = "<group>"; };
 		1EB06746214BDCC100F0BF1E /* Particle.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Particle.metal; sourceTree = "<group>"; };
 		1EB06747214BDCC100F0BF1E /* ParticlesMTKView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticlesMTKView.h; sourceTree = "<group>"; };
+		9F3F509B231CC5ED00DC0B5F /* problem.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = problem.zip; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 		1EB0672A214BDBA500F0BF1E /* ParticlesText */ = {
 			isa = PBXGroup;
 			children = (
+				9F3F509B231CC5ED00DC0B5F /* problem.zip */,
 				1EB06746214BDCC100F0BF1E /* Particle.metal */,
 				1EB06742214BDCC000F0BF1E /* ParticlesBuilder.h */,
 				1EB06743214BDCC000F0BF1E /* ParticlesBuilder.m */,
@@ -142,6 +145,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1EB06738214BDBA600F0BF1E /* LaunchScreen.storyboard in Resources */,
+				9F3F509C231CC5ED00DC0B5F /* problem.zip in Resources */,
 				1EB06735214BDBA600F0BF1E /* Assets.xcassets in Resources */,
 				1EB06733214BDBA500F0BF1E /* Main.storyboard in Resources */,
 			);
